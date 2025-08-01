@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Todos los Libros - {{ app_name }}{% endblock %}
+
+{% block content %}
+    <h1>Todos los Libros</h1>
+
+    {% comment %} Mensaje si hay un filtro aplicado {% endcomment %}
+    {% if request.GET.author or request.GET.genre or request.GET.year %}
+        <p>Mostrando libros filtrados:</p>
+        <ul>
+            {% if request.GET.author %}
+                <li><strong>Autor(es):</strong> {{ request.GET.author|join:", " }}</li>
+            {% endif %}
+            {% if request.GET.genre %}
+                <li><strong>Género(s):</strong> {{ request.GET.genre|join:", " }}</li>
+            {% endif %}
+            {% if request.GET.year %}
+                <li><strong>Año(s):</strong> {{ request.GET.year|join:", " }}</li>
+            {% endif %}
+        </ul>
+    {% endif %}
+
+    {% if books %}
+        <div class="book-grid">
+            {% for book in books %}
+                <div class="book-item">
+                    <img src="{{ book.cover_image }}" alt="Portada de {{ book.title }}">
+                    <h3>{{ book.title }}</h3>
+                    <p><strong>Autor:</strong> {{ book.author }}</p>
+                    <p><strong>Género:</strong> {{ book.genre }}</p>
+                    {% if book.publication_year %}
+                        <p><strong>Año:</strong> {{ book.publication_year }}</p>
+                    {% endif %}
+                    <div class="book-detail">
+                        <details>
+                            <summary>Ver Sinopsis</summary>
+                            <p>{{ book.synopsis }}</p>
+                        </details>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {# Paginación #}
+        {% if is_paginated %}
+        <div class="pagination" style="text-align: center; margin-top: 30px;">
+            <span class="step-links">
+                {# Construye la URL de paginación manteniendo los parámetros de filtro #}
+                {% url 'book_list' as base_url %}
+                {% if request.GET %}
+                    {% for key, values in request.GET.lists %}
+                        {% for value in values %}
+                            {% if key != 'page' %}
+                                {% with base_url=base_url|add:"&"|add:key|add:"="|add:value %}{% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                {% endif %}
+
+                {% if page_obj.has_previous %}
+                    <a href="{{ base_url }}?page=1" style="margin: 0 5px; text-decoration: none; padding: 8px 12px; border: 1px solid #ccc; border-radius: 5px; color: #007bff;">&laquo; Primera</a>
+                    <a href="{{ base_url }}?page={{ page_obj.previous_page_number }}" style="margin: 0 5px; text-decoration: none; padding: 8px 12px; border: 1px solid #ccc; border-radius: 5px; color: #007bff;">Anterior</a>
+                {% endif %}
+
+                <span class="current" style="margin: 0 10px; padding: 8px 12px; background-color: #007bff; color: white; border-radius: 5px;">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="{{ base_url }}?page={{ page_obj.next_page_number }}" style="margin: 0 5px; text-decoration: none; padding: 8px 12px; border: 1px solid #ccc; border-radius: 5px; color: #007bff;">Siguiente</a>
+                    <a href="{{ base_url }}?page={{ page_obj.paginator.num_pages }}" style="margin: 0 5px; text-decoration: none; padding: 8px 12px; border: 1px solid #ccc; border-radius: 5px; color: #007bff;">Última &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+        {% endif %}
+
+    {% else %}
+        <p>No hay libros disponibles con los filtros aplicados.</p>
+        <p><a href="{% url 'book_list' %}">Ver todos los libros</a></p>
+    {% endif %}
+{% endblock %}
